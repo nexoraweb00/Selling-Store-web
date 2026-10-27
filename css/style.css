@@ -962,3 +962,46 @@ input:focus-visible {
     height: 140px;
   }
 }
+
+@media (max-width: 768px) {
+  .header {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 15px !important;
+  }
+
+  .menu-toggle {
+    display: none !important;
+  }
+
+  .logo {
+    font-size: 15px !important;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav {
+    display: flex !important;
+    position: static !important;
+    flex-direction: row !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    gap: 12px !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .nav a, 
+  .nav span {
+    display: inline-block !important;
+    padding: 0 !important;
+    border: none !important;
+    font-size: 13px !important;
+    white-space: nowrap;
+  }
+}
