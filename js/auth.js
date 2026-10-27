@@ -1,10 +1,9 @@
-
 import { DB, showToast, auth } from './data.js';
-import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 getRedirectResult(auth)
   .then((result) => {
-    if (result) {
+    if (result && result.user) {
       const user = result.user;
       const userData = {
         username: user.displayName || user.email.split('@')[0],
@@ -14,12 +13,25 @@ getRedirectResult(auth)
       };
       DB.setCurrentUser(userData);
       showToast(`Welcome, ${userData.username}! ✅`);
+      const redirect = new URLSearchParams(location.search).get("redirect") || "index.html";
       setTimeout(() => { location.href = redirect; }, 1000);
     }
   }).catch((error) => {
     console.error("Redirect Login Error:", error);
     showToast("Google Login failed. Please try again.", "error");
   });
+
+
+window.googleLogin = async function() {
+  try {
+    const provider = new GoogleAuthProvider();
+
+    await signInWithRedirect(auth, provider);
+  } catch (error) {
+    console.error("Google Login Error:", error);
+    showToast("Google Login failed. Please try again.", "error");
+  }
+};
 
 
 window.googleLogin = async function() {
