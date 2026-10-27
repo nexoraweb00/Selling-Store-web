@@ -19,9 +19,9 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
-export const ADMIN_WHATSAPP = "94771234567";
+export const ADMIN_WHATSAPP = "94775029744";
 export const ADMIN_USERNAME = "admin";
-export const ADMIN_PASSWORD = "admin123";
+export const ADMIN_PASSWORD = "123456";
 
 
 let cachedProducts = [];
