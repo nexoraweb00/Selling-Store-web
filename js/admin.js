@@ -1,21 +1,26 @@
-import { auth } from './data.js';
+import { DB, formatPrice, showToast, auth, db } from './data.js';
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
 
 document.getElementById("adminLoginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = document.getElementById("adminUser").value; 
+  const email = document.getElementById("adminUser").value;
   const password = document.getElementById("adminPass").value;
 
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const token = await userCredential.user.getIdTokenResult();
-    
-    if (token.claims.admin === true) {
+    const uid = userCredential.user.uid;
+
+    const adminRef = doc(db, "admins", uid);
+    const adminSnap = await getDoc(adminRef);
+
+    if (adminSnap.exists()) {
       localStorage.setItem("mp_admin", "1");
       showPanel();
     } else {
       showToast("You are not an authorized admin.", "error");
-      await auth.signOut(); 
+      await auth.signOut();
     }
   } catch (error) {
     console.error("Login error:", error);
