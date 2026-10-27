@@ -1,7 +1,55 @@
 
 import { DB, showToast, auth } from './data.js';
-import { GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+getRedirectResult(auth)
+  .then((result) => {
+    if (result) {
+      const user = result.user;
+      const userData = {
+        username: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid
+      };
+      DB.setCurrentUser(userData);
+      showToast(`Welcome, ${userData.username}! ✅`);
+      setTimeout(() => { location.href = redirect; }, 1000);
+    }
+  }).catch((error) => {
+    console.error("Redirect Login Error:", error);
+    showToast("Google Login failed. Please try again.", "error");
+  });
+
+
+window.googleLogin = async function() {
+  try {
+    const provider = new GoogleAuthProvider();
+    
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+
+      await signInWithRedirect(auth, provider);
+    } else {
+
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const userData = {
+        username: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        photoURL: user.photoURL,
+        uid: user.uid
+      };
+      DB.setCurrentUser(userData);
+      showToast(`Welcome, ${userData.username}! ✅`);
+      setTimeout(() => { location.href = redirect; }, 1000);
+    }
+  } catch (error) {
+    console.error("Google Login Error:", error);
+    showToast("Google Login failed. Please try again.", "error");
+  }
+};
 let isRegister = false;
 const params = new URLSearchParams(location.search);
 const redirect = params.get("redirect") || "index.html";
