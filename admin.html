@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Vacation Selling.webstore</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">🛠️ Admin Panel</div>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+    <nav class="nav" id="mainNav">
+      <a href="index.html">Home</a>
+      <a href="#" onclick="adminLogout();return false;">Logout</a>
+    </nav>
+  </header>
+
+
+  <div id="adminLogin" class="auth-wrap">
+    <h2>Admin Login</h2>
+    <form id="adminLoginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="adminUser" required />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="adminPass" required />
+      </div>
+      <button type="submit" class="btn btn-block">Login</button>
+    </form>
+    <p style="font-size:12px; color:#888; text-align:center; margin-top:10px">
+      Default: admin / admin123
+    </p>
+  </div>
+
+  
+  <div id="adminPanel" class="container" style="display:none">
+    <div class="admin-tabs">
+      <button class="active" data-tab="orders">
+        📦 Orders <span id="notifBadge" class="badge-notif" style="display:none">0</span>
+      </button>
+      <button data-tab="products">🛍️ Products</button>
+      <button data-tab="addProduct">➕ Add Product</button>
+      <button data-tab="offers">🎁 Offers</button>
+    </div>
+
+
+    <div class="tab-content active" id="tab-orders">
+      <h2 class="section-title">Orders</h2>
+      <div id="ordersList"></div>
+    </div>
+
+
+    <div class="tab-content" id="tab-products">
+      <h2 class="section-title">Products</h2>
+      <div id="productsList"></div>
+    </div>
+
+
+    <div class="tab-content" id="tab-addProduct">
+      <h2 class="section-title" id="addFormTitle">Add New Product</h2>
+      <div style="max-width: 500px; background: white; padding: 20px; border-radius: 12px">
+        <form id="addProductForm">
+          <input type="hidden" id="editId" />
+          <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" id="pName" required />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" id="pCategory" placeholder="Screens / Batteries / Chargers..." required />
+          </div>
+          <div class="form-group">
+            <label>Price (Rs.)</label>
+            <input type="number" id="pPrice" required />
+          </div>
+          <div class="form-group">
+  <label>Original Price (For Discount - Optional)</label>
+  <input type="number" id="pOriginalPrice" placeholder="e.g. 25000" />
+</div>
+<div class="form-group">
+  <label>Warranty</label>
+  <input type="text" id="pWarranty" placeholder="e.g. 3 Months" />
+</div>
+<div class="form-group">
+  <label>Description</label>
+  <textarea id="pDescription" rows="3" style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd;"></textarea>
+</div>
+<div class="form-group">
+  <label>Variants (Comma separated)</label>
+  <input type="text" id="pVariants" placeholder="e.g. Black, White, Blue" />
+</div>
+<div class="form-group">
+  <label>Sizes (Comma separated - Optional)</label>
+  <input type="text" id="pSizes" placeholder="e.g. S, M, L, XL, XXL" />
+</div>
+          <div class="form-group">
+            <label>Stock Quantity</label>
+            <input type="number" id="pStock" required />
+            </div>
+          <div class="form-group">
+  <label>Product Images (Select multiple)</label>
+  <input type="file" id="pImageFile" accept="image/*" multiple />
+  <div id="imagePreview" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; display:none"></div>
+  <p style="font-size:12px; color:#888; margin-top:6px">Add image</p>
+  
+  <input type="hidden" id="pImagesData" /> 
+</div>
+  
+</div>
+          <div class="form-group">
+            <label>Image URL (optional)</label>
+            <input type="url" id="pImage" placeholder="https://..." />
+          </div>
+          <button type="submit" class="btn btn-block" id="saveProductBtn">Add Product</button>
+          <button type="button" class="btn btn-block btn-outline" id="cancelEditBtn" style="display:none; margin-top:8px" onclick="cancelEdit()">Cancel</button>
+        </form>
+      </div>
+    </div>
+  </div>
+     
+    <div class="tab-content" id="tab-offers">
+      <h2 class="section-title">Manage Offers</h2>
+      
+      
+      <div style="max-width: 600px; background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+        <form id="addOfferForm">
+          <div class="form-group">
+            <label>Offer Title</label>
+            <input type="text" id="offerTitle" placeholder="e.g. Weekend Sale / 10% Off" required />
+          </div>
+          
+          <div class="form-group">
+            <label>Banner Image</label>
+            <input type="file" id="offerImageFile" accept="image/*" />
+            <div id="offerImagePreview" style="margin-top:10px; display:none;">
+               <img id="offerPreviewImg" style="width: 100%; max-height: 150px; object-fit: cover; border-radius: 8px;" />
+            </div>
+            <input type="hidden" id="offerImageData" />
+          </div>
+
+          <div class="form-group">
+            <label>Select Items for this Offer (Hold Ctrl / Cmd to select multiple)</label>
+            <select id="offerProducts" multiple style="height: 150px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+              
+            </select>
+          </div>
+          
+          <button type="submit" class="btn btn-block" id="saveOfferBtn">Add Offer</button>
+        </form>
+      </div>
+
+      <div id="offersList"></div>
+    </div>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

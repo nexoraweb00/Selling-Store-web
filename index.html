@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vacation Selling.webstore</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="myLoadingScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #1a1a2e; z-index: 99999; justify-content: center; align-items: center;">
+
+  <iframe src="Phone Assemble.html" style="width: 100%; height: 100%; border: none; overflow: hidden;" scrolling="no"></iframe>
+</div>
+
+
+<script>
+
+  const skip = sessionStorage.getItem("skipLoader");
+
+  if (skip === "true") {
+    
+    sessionStorage.removeItem("skipLoader");
+  } else {
+     document.getElementById("myLoadingScreen").style.display = "flex";
+  }
+</script>
+<div id="bg-animation">
+  <iframe src="Blue Whale - Aerial View.html" frameborder="0" scrolling="no"></iframe>
+</div>
+  <header class="header">
+    <div class="logo">Vacation Selling</div>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+    <nav class="nav" id="mainNav">
+      <a href="index.html">Home</a>
+      <a href="cart.html" class="cart-link">Cart 🛒 <span class="cart-count">0</span></a>
+      <span id="userArea"></span>
+    </nav>
+  </header>
+  
+
+<div class="container" id="offersContainer" style="display: none; margin-top: 20px; margin-bottom: 10px;">
+  <h2 class="section-title" style="color: white; margin-bottom: 15px;">🔥 Special Offers</h2>
+  <div class="offers-slider">
+    <div class="offers-grid" id="offersGrid">
+
+    </div>
+  </div>
+</div>
+
+
+<div class="container">
+  <div class="header-row">
+    <h2 class="section-title" style="color: #ffffff; margin-bottom: 0;">All Parts</h2>
+    
+    <div class="search-bar-inline">
+      <input type="text" id="searchInput" placeholder="🔍 Search for parts..." />
+    </div>
+  </div>
+
+  <div class="product-grid" id="productGrid" style="margin-top: 20px;"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <div class="icon">🔍</div>
+    <p style="color: white;">No parts found</p>
+  </div>
+</div>
+
+  <script type="module">
+    import { DB, formatPrice, updateCartBadge, showToast } from './js/data.js';
+
+    async function initHome() {
+      document.getElementById("productGrid").innerHTML = "<p style='color:white;'>Loading products...</p>";
+      document.getElementById("offersContainer").style.display = "none";
+
+      await DB.fetchProducts(); 
+      await DB.fetchOffers();
+
+      renderProducts();
+      renderOffers();
+      renderUserArea();
+      updateCartBadge();
+    }
+
+    function renderProducts(filter = "") {
+      const grid = document.getElementById("productGrid");
+      const empty = document.getElementById("emptyState");
+      const products = DB.getProducts(); // Cache එකෙන් ගන්නවා
+
+      const filtered = products.filter(
+        (p) => p.name.toLowerCase().includes(filter.toLowerCase()) || p.category.toLowerCase().includes(filter.toLowerCase())
+      );
+
+      if (filtered.length === 0) {
+        grid.innerHTML = "";
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      grid.innerHTML = filtered.map((p) => {
+        const out = p.stock <= 0;
+        return `
+        <div class="product-card">
+          <a href="product.html?id=${p.id}" style="text-decoration:none; color:inherit;">
+            <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300?text=No+Image'" />
+          </a>
+          <div class="product-info">
+            <a href="product.html?id=${p.id}" style="text-decoration:none; color:inherit;">
+              <h3>${p.name}</h3>
+            </a>
+            <div class="category">${p.category}</div>
+            <div class="price">${formatPrice(p.price)}</div>
+            <span class="stock-badge ${out ? "stock-out" : "stock-in"}">
+              ${out ? "❌ Out of Stock" : "✅ Stock: " + p.stock}
+            </span>
+            <button class="btn btn-block" ${out ? "disabled" : ""} onclick="addToCart(${p.id})">
+              ${out ? "Out of Stock" : "🛒 Add to Cart"}
+            </button>
+          </div>
+        </div>`;
+      }).join("");
+    }
+
+    function renderOffers() {
+      const offers = DB.getOffers();
+      const container = document.getElementById("offersContainer");
+      const grid = document.getElementById("offersGrid");
+
+      if (offers.length === 0) {
+        container.style.display = "none";
+        return;
+      }
+
+      container.style.display = "block";
+      const duplicatedOffers = [...offers, ...offers]; 
+
+      grid.innerHTML = duplicatedOffers.map(o => `
+        <div class="offer-card" onclick="window.location.href='offer.html?id=${o.id}'">
+          <img src="${o.image}" alt="${o.title}" />
+          <div class="offer-title">${o.title}</div>
+        </div>
+      `).join('');
+    }
+
+    window.logoutUser = function() {
+      DB.setCurrentUser(null);
+      location.reload();
+    };
+
+    function renderUserArea() {
+      const user = DB.getCurrentUser();
+      const area = document.getElementById("userArea");
+      if (!area) return;
+      if (user) {
+        const photoHtml = user.photoURL ? `<img src="${user.photoURL}" style="width: 25px; height: 25px; border-radius: 50%; margin-right: 5px;" />` : `👤`;
+        
+        area.innerHTML = `<span class="user-tag" style="display: flex; align-items: center; gap: 5px;">${photoHtml} ${user.username}<a href="#" onclick="window.logoutUser(); return false;" style="margin-left: 10px; color: #ff6b6b; text-decoration: none;">Logout</a></span>`;
+      } else {
+        area.innerHTML = `<a href="login.html">Login</a>`;
+      }
+    }
+
+    window.addToCart = function(id) {
+      const products = DB.getProducts();
+      const product = products.find((p) => p.id === id);
+      if (!product || product.stock <= 0) return showToast("Out of stock", "error");
+
+      const cart = DB.getCart();
+      const existing = cart.find((i) => i.id === id);
+
+      if (existing) {
+        if (existing.qty >= product.stock) return showToast("Stock limit reached", "error");
+        existing.qty++;
+      } else {
+        cart.push({ id, name: product.name, price: product.price, qty: 1, image: product.image });
+      }
+
+      DB.setCart(cart);
+      updateCartBadge();
+      showToast("Added to cart ✅");
+    };
+
+    document.getElementById("searchInput").addEventListener("input", (e) => renderProducts(e.target.value));
+
+    initHome();
+  </script>
+    <script>
+    const animationTime = 4000;
+
+    window.addEventListener("load", () => {
+        const loader = document.getElementById("myLoadingScreen");
+        
+        if (loader && loader.style.display === "flex") {
+            setTimeout(() => {
+                loader.style.transition = "opacity 0.5s ease";
+                loader.style.opacity = "0";
+                setTimeout(() => {
+                    loader.style.display = "none";
+                }, 500);
+            }, animationTime);
+        }
+    });
+</script>
+</body>
+</html>

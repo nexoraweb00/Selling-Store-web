@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cart — Vacation Selling</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">Vacation Selling</div>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+    <nav class="nav" id="mainNav">
+      <a href="index.html">Home</a>
+      <a href="cart.html" class="cart-link">Cart 🛒 <span class="cart-count">0</span></a>
+      <span id="userArea"></span>
+    </nav>
+  </header>
+
+  <div class="container">
+    <h2 class="section-title" style="color:white;">🛒 Your Cart</h2>
+    <div id="cartList"></div>
+    <div id="emptyCart" class="empty-state" style="display:none">
+      <div class="icon">🛒</div>
+      <p style="color:white;">Your cart is empty</p>
+      <a href="index.html" class="btn" style="margin-top:15px">Shop Now</a>
+    </div>
+
+    <div class="cart-summary" id="cartSummary" style="display:none">
+      <div class="row"><span>Subtotal</span><span id="subtotal">Rs. 0</span></div>
+      <div class="row"><span>Delivery</span><span>Rs. 350</span></div>
+      <div class="row total"><span>Total</span><span id="grandTotal">Rs. 0</span></div>
+
+      <h3 style="margin: 20px 0 10px">Payment Method</h3>
+      <div class="payment-options">
+        <label class="payment-option" data-method="whatsapp">
+          <input type="radio" name="payment" value="whatsapp" />
+          <span class="icon">💬</span>
+          <div class="label"><strong>WhatsApp Order</strong><span>Confirm via WhatsApp</span></div>
+        </label>
+        <label class="payment-option" data-method="card">
+          <input type="radio" name="payment" value="card" />
+          <span class="icon">💳</span>
+          <div class="label"><strong>Card Payment</strong><span>Visa / Mastercard</span></div>
+        </label>
+        <label class="payment-option" data-method="cod">
+          <input type="radio" name="payment" value="cod" />
+          <span class="icon">🚚</span>
+          <div class="label"><strong>Cash on Delivery</strong><span>Pay when you receive</span></div>
+        </label>
+      </div>
+
+      <div class="card-form" id="cardForm">
+        <div class="form-group">
+          <label>Card Number</label>
+          <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19" />
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+          <div class="form-group" style="flex:1; min-width:100px">
+            <label>Expiry</label>
+            <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" />
+          </div>
+          <div class="form-group" style="flex:1; min-width:100px">
+            <label>CVV</label>
+            <input type="text" id="cardCvv" placeholder="123" maxlength="4" />
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-block" id="placeOrderBtn" style="margin-top:10px">Place Order</button>
+    </div>
+  </div>
+
+  <div id="deliveryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 10000; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px;">
+      <h3 style="margin-bottom: 10px;">Delivery Details</h3>
+      <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Please enter your details to continue.</p>
+      <div class="form-group">
+        <label>Mobile Number</label>
+        <input type="text" id="popupPhone" placeholder="07X XXX XXXX" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px;" />
+      </div>
+      <div class="form-group">
+        <label>Delivery Address</label>
+        <textarea id="popupAddress" rows="3" placeholder="Your full address" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 15px;"></textarea>
+      </div>
+      <button class="btn btn-block" id="saveDetailsBtn" style="background: #10b981;">Save & Continue</button>
+      <button class="btn btn-block btn-outline" onclick="document.getElementById('deliveryModal').style.display='none'" style="margin-top: 10px;">Cancel</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/cart.js"></script>
+</body>
+</html>

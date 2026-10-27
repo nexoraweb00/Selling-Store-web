@@ -1,0 +1,172 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Phone Assemble</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+:root{--bg:#000;--fg:#dbe4ff;--muted:#7f93c4;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:0;overflow:hidden}
+.wrap{position:relative;height:100%;display:flex;flex-direction:column}
+#stage{flex:1;min-height:0;position:relative;cursor:pointer}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+p{margin:0;padding:10px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));text-align:center;font-size:13px;color:var(--muted)}
+</style>
+<div class="wrap"><div id="stage"><canvas id="c"></canvas></div></div>
+<script>
+// Side-view exploded phone. draw(ctx, w, h, t); t in seconds, plays once then holds.
+var LOOP = 6;
+function clamp(x){return Math.max(0,Math.min(1,x));}
+function easeIn(x){return x*x*x;}
+function easeIO(x){return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;}
+
+// k = how far apart the layers are (1 apart, 0 together)
+function spread(t){
+  if(t<1.0) return 1;
+  if(t<2.3) return 1-easeIn((t-1.0)/1.3);   // every layer snaps in at once
+  return 0;
+}
+
+// layers back to front. za/d = real position and thickness (x PW). px,py = position on the phone (x PW, x PH).
+var LAYERS = [
+  {n:'back', i:0, za:0,    d:.030, px:0,   py:0,    drift:[ .00, .10], roll:-.05},
+  {n:'cam',  i:1, za:.030, d:.050, px:.20, py:-.34, drift:[ .10,-.28], roll: .10},
+  {n:'batt', i:2, za:.030, d:.045, px:0,   py:.20,  drift:[-.05, .16], roll: .04},
+  {n:'board',i:3, za:.075, d:.020, px:0,   py:-.20, drift:[ .06,-.12], roll:-.06},
+  {n:'btns', i:4, za:.030, d:.040, px:0,   py:0,    drift:[-.10, .00], roll: .00},
+  {n:'frame',i:4, za:0,    d:.100, px:0,   py:0,    drift:[ .00, .00], roll: .00},
+  {n:'panel',i:4.5, za:.090, d:.010, px:0, py:0,  drift:[ .00,-.03], roll: .02},
+  {n:'glass',i:5, za:.100, d:.020, px:0,   py:0,    drift:[ .00,-.08], roll: .05}
+];
+var SIDE = {panel:'#06080d',back:'#16203a',cam:'#0a0d16',batt:'#a8832f',board:'#146048',frame:'#6b778e',btns:'#8a94ab',glass:'#33436e'};
+
+function rr(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);}
+
+// outline rectangles of each part: [x,y,w,h,r] relative to the part's own centre
+function shapes(n,W,H){
+  var R=W*.14;
+  if(n==='back')  return [[-W/2,-H/2,W,H,R]];
+  if(n==='frame') return [[-W/2-W*.015,-H/2-W*.015,W+W*.03,H+W*.03,R]];
+  if(n==='panel') return [[-W/2+W*.03,-H/2+W*.03,W-W*.06,H-W*.06,R*.8]];
+  if(n==='glass') return [[-W/2+W*.045,-H/2+W*.045,W-W*.09,H-W*.09,R*.72]];
+  if(n==='cam')   return [[-W*.15,-W*.15,W*.3,W*.3,W*.06]];
+  if(n==='batt')  return [[-W*.36,-H*.21,W*.72,H*.42,W*.05]];
+  if(n==='board') return [[-W*.39,-H*.17,W*.78,H*.34,W*.04]];
+  if(n==='btns')  return [[-W/2-W*.04,-H*.22,W*.045,H*.08,W*.015],[-W/2-W*.04,-H*.10,W*.045,H*.14,W*.015]];
+  return [];
+}
+
+function ring(c,W,H){var R=W*.14;c.beginPath();c.roundRect(-W/2-W*.015,-H/2-W*.015,W+W*.03,H+W*.03,R);c.roundRect(-W/2+W*.03,-H/2+W*.03,W-W*.06,H-W*.06,R*.8);}
+
+// front-face artwork, drawn in the part's own plane
+function art(c,n,W,H,glow){
+  var R=W*.14;
+  if(n==='back'){
+    var g=c.createLinearGradient(-W/2,-H/2,W/2,H/2);g.addColorStop(0,'#2d3a58');g.addColorStop(1,'#19223a');
+    rr(c,-W/2,-H/2,W,H,R);c.fillStyle=g;c.fill();
+  }else if(n==='cam'){
+    var s=W*.3;rr(c,-s/2,-s/2,s,s,W*.06);c.fillStyle='#10131c';c.fill();c.strokeStyle='#8fa3c7';c.lineWidth=W*.012;c.stroke();
+    [[-.22,-.22],[.22,.22]].forEach(function(p){
+      c.beginPath();c.arc(p[0]*s*1.2,p[1]*s*1.2,s*.2,0,7);c.fillStyle='#25324f';c.fill();
+      c.beginPath();c.arc(p[0]*s*1.2,p[1]*s*1.2,s*.09,0,7);c.fillStyle='#6aa8ff';c.fill();});
+  }else if(n==='batt'){
+    var w=W*.72,h=H*.42;rr(c,-w/2,-h/2,w,h,W*.05);c.fillStyle='#e8b64a';c.fill();
+    c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=W*.012;
+    for(var i=1;i<4;i++){c.beginPath();c.moveTo(-w/2+i*w/4,-h/2+W*.03);c.lineTo(-w/2+i*w/4,h/2-W*.03);c.stroke();}
+  }else if(n==='board'){
+    var w2=W*.78,h2=H*.34;rr(c,-w2/2,-h2/2,w2,h2,W*.04);c.fillStyle='#1f8a6a';c.fill();
+    c.strokeStyle='#7fe3c0';c.lineWidth=W*.008;
+    c.beginPath();c.moveTo(-w2*.4,-h2*.3);c.lineTo(-w2*.05,-h2*.3);c.lineTo(-w2*.05,h2*.1);c.lineTo(w2*.3,h2*.1);c.stroke();
+    c.fillStyle='#222';rr(c,-w2*.38,-h2*.1,w2*.3,h2*.4,W*.012);c.fill();
+    c.fillStyle='#444';rr(c,w2*.05,-h2*.35,w2*.3,h2*.28,W*.012);c.fill();
+  }else if(n==='frame'){
+    ring(c,W,H);c.fillStyle='#aab4c6';c.fill('evenodd');
+  }else if(n==='panel'){
+    var q=shapes('panel',W,H)[0];rr(c,q[0],q[1],q[2],q[3],q[4]);c.fillStyle='#0c0f16';c.fill();
+  }else if(n==='btns'){
+    c.fillStyle='#d5dbe8';shapes('btns',W,H).forEach(function(a){rr(c,a[0],a[1],a[2],a[3],a[4]);c.fill();});
+  }else if(n==='glass'){
+    var gw=W-W*.09,gh=H-W*.09;rr(c,-gw/2,-gh/2,gw,gh,R*.72);
+    var g2=c.createLinearGradient(0,-gh/2,0,gh/2);
+    g2.addColorStop(0,'rgba(110,165,255,'+(0.30+glow*.7)+')');
+    g2.addColorStop(1,'rgba(176,90,255,'+(0.26+glow*.7)+')');
+    c.fillStyle=g2;c.fill();c.strokeStyle='rgba(255,255,255,.4)';c.lineWidth=W*.01;c.stroke();
+    if(glow>0.01){
+      c.fillStyle='rgba(255,255,255,'+(.95*glow)+')';c.textAlign='center';c.textBaseline='middle';
+      c.font='600 '+(W*.24)+'px system-ui,sans-serif';c.fillText('9:41',0,-gh*.18);
+      c.font='500 '+(W*.06)+'px system-ui,sans-serif';c.fillText('Thursday, October 22',0,-gh*.08);
+    }
+  }
+}
+
+function draw(c,w,h,t){
+  var tt=Math.max(0,Math.min(t,LOOP)), k=spread(tt);
+  var cx=w/2, cy=h/2, s=Math.min(w,h);
+  // dark blue to black background
+  var bg=c.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.75);
+  bg.addColorStop(0,'#0c2557');bg.addColorStop(.55,'#071230');bg.addColorStop(1,'#000000');
+  c.fillStyle=bg;c.fillRect(0,0,w,h);
+
+  var W=Math.min(w*.40,h*.30), H=W*2.05;
+  var gap=W*Math.max(.30,Math.min(.75,(w*.85/W-.5)/4.4));
+  // camera turns from a side view toward the screen after the parts have joined
+  var yaw=(62-34*easeIO(clamp((tt-2.5)/2.0)))*Math.PI/180+Math.sin(tt*.9)*.025*k;
+  var pit=.14, cyw=Math.cos(yaw), syw=Math.sin(yaw), cp=Math.cos(pit), sp=Math.sin(pit), F=H*4;
+  var zc=(.12*W+5*gap*k)/2;
+
+  function proj(x,y,z){
+    z-=zc;
+    var x1=x*cyw+z*syw, z1=-x*syw+z*cyw;
+    var y2=y*cp-z1*sp, z2=y*sp+z1*cp, sc=F/(F-z2);
+    return [cx+x1*sc, cy+y2*sc];
+  }
+
+  var impact=(tt>2.2&&tt<3.1)?1-clamp((tt-2.2)/.9):0;
+  var glow=clamp((tt-2.3)/.6);
+  if(impact>0){
+    var rg=c.createRadialGradient(cx,cy,0,cx,cy,s*.7);
+    rg.addColorStop(0,'rgba(70,140,255,'+(.4*impact)+')');rg.addColorStop(1,'rgba(70,140,255,0)');
+    c.fillStyle=rg;c.fillRect(0,0,w,h);
+    c.strokeStyle='rgba(120,180,255,'+(.6*impact)+')';c.lineWidth=3;
+    c.beginPath();c.arc(cx,cy,H*.28+(1-impact)*s*.4,0,7);c.stroke();
+  }
+
+  LAYERS.forEach(function(L,idx){
+    var bob=Math.sin(tt*1.7+idx*1.3)*H*.012*k;
+    var ox=L.px*W+L.drift[0]*W*k*1.6, oy=L.py*H+L.drift[1]*H*k+bob;
+    var roll=L.roll*k*1.6, cr=Math.cos(roll), sr=Math.sin(roll);
+    var z0=L.za*W+L.i*gap*k, d=Math.max(L.d*W,W*.03);
+    function plane(z){
+      function P(u,v){return proj(ox+u*cr-v*sr, oy+u*sr+v*cr, z);}
+      var o=P(0,0), a=P(1,0), b=P(0,1);
+      return [a[0]-o[0],a[1]-o[1],b[0]-o[0],b[1]-o[1],o[0],o[1]];
+    }
+    var n=Math.max(2,Math.min(16,Math.ceil(d*Math.abs(syw)/1.4)));
+    for(var sl=0;sl<n;sl++){
+      var m=plane(z0+d*sl/n);
+      c.save();c.transform(m[0],m[1],m[2],m[3],m[4],m[5]);
+      c.fillStyle=SIDE[L.n];
+      if(L.n==='frame'){ring(c,W,H);c.fill('evenodd');}
+      else shapes(L.n,W,H).forEach(function(a){rr(c,a[0],a[1],a[2],a[3],a[4]);c.fill();});
+      c.restore();
+    }
+    var f=plane(z0+d);
+    c.save();c.transform(f[0],f[1],f[2],f[3],f[4],f[5]);
+    art(c,L.n,W,H,glow);
+    c.restore();
+  });
+}
+
+(function(){
+var cv=document.getElementById('c'),ctx=cv.getContext('2d'),st=document.getElementById('stage');
+var W=0,H=0,still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function fit(){var r=st.getBoundingClientRect(),d=Math.min(window.devicePixelRatio||1,2);
+W=Math.max(1,r.width);H=Math.max(1,r.height);cv.width=Math.round(W*d);cv.height=Math.round(H*d);ctx.setTransform(d,0,0,d,0,0);}
+fit();window.addEventListener('resize',fit);
+if(window.ResizeObserver)new ResizeObserver(fit).observe(st);
+var t0=performance.now();
+st.addEventListener('click',function(){t0=performance.now();});
+function frame(now){draw(ctx,W,H,still?LOOP:(now-t0)/1000);requestAnimationFrame(frame);}
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
