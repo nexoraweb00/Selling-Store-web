@@ -68,14 +68,16 @@
   <script type="module">
     import { DB, formatPrice, updateCartBadge, showToast } from './js/data.js';
 
-    async function initHome() {
+        async function initHome() {
       document.getElementById("productGrid").innerHTML = "<p style='color:white;'>Loading products...</p>";
       document.getElementById("offersContainer").style.display = "none";
 
-      await DB.fetchProducts(); 
-      await DB.fetchOffers();
 
-      renderProducts();
+      DB.listenProducts((products) => {
+        renderProducts();
+      });
+
+      await DB.fetchOffers();
       renderOffers();
       renderUserArea();
       updateCartBadge();

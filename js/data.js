@@ -1,7 +1,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, query, orderBy, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = {
@@ -37,6 +37,19 @@ export const DB = {
     const snapshot = await getDocs(q);
     cachedProducts = snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() }));
     return cachedProducts;
+  },
+
+  listenProducts: (callback) => {
+    const q = query(collection(db, "products"), orderBy("id", "desc"));
+    onSnapshot(q, (snapshot) => {
+      cachedProducts = snapshot.docs.map(doc => ({ docId: doc.id, ...doc.data() }));
+      if (callback) callback(cachedProducts);
+    });
+  },
+
+  decreaseStock: async (docId, qty) => {
+    const productRef = doc(db, "products", docId);
+    await updateDoc(productRef, { stock: increment(-qty) });
   },
   
   addProduct: async (productData) => {
