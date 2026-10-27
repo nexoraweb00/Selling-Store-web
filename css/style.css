@@ -527,38 +527,43 @@ input:focus-visible {
   .section-title { font-size: 22px; }
 }
 
-@media (max-width: 768px) {
-  .header { padding: 12px 16px; }
-  .logo { font-size: 18px; }
-  .menu-toggle { display: block; }
 
-  .nav {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #1a1a2e;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    padding: 0;
-    max-height: 0;
+  .header { 
+    padding: 10px 12px; 
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+  
+  .logo { 
+    font-size: 15px; 
+    max-width: 120px;
+    white-space: nowrap;
     overflow: hidden;
-    transition: max-height 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    text-overflow: ellipsis;
+  }
+  
+  .menu-toggle { 
+    display: none !important; 
   }
 
-  .nav.show {
-    max-height: 400px;
-    padding: 8px 0;
+  .nav {
+    position: static;
+    flex-direction: row; 
+    background: transparent;
+    gap: 12px;
+    padding: 0;
+    box-shadow: none;
+    max-height: none;
+    overflow: visible;
+    align-items: center;
   }
 
   .nav a,
   .nav > span {
-    padding: 13px 22px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    display: block;
-    font-size: 15px;
+    padding: 0;
+    border-bottom: none;
+    font-size: 13px;
+    white-space: nowrap;
   }
 
   .nav > span:last-child { border-bottom: none; }
@@ -627,7 +632,6 @@ input:focus-visible {
   }
 
   input, select, textarea { font-size: 16px !important; }
-}
 
 @media (max-width: 400px) {
   .product-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
