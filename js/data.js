@@ -51,6 +51,11 @@ export const DB = {
     const productRef = doc(db, "products", docId);
     await updateDoc(productRef, { stock: increment(-qty) });
   },
+     
+  increaseStock: async (docId, qty) => {
+    const productRef = doc(db, "products", docId);
+    await updateDoc(productRef, { stock: increment(qty) });
+  },
   
   addProduct: async (productData) => {
     const docRef = await addDoc(collection(db, "products"), productData);

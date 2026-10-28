@@ -86,7 +86,7 @@
     function renderProducts(filter = "") {
       const grid = document.getElementById("productGrid");
       const empty = document.getElementById("emptyState");
-      const products = DB.getProducts(); // Cache එකෙන් ගන්නවා
+      const products = DB.getProducts(); 
 
       const filtered = products.filter(
         (p) => p.name.toLowerCase().includes(filter.toLowerCase()) || p.category.toLowerCase().includes(filter.toLowerCase())

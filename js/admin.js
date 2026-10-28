@@ -105,10 +105,35 @@ function renderOrders() {
 }
 
 window.updateOrderStatus = async function(docId, status) {
+  const orders = DB.getOrders();
+  const order = orders.find((o) => o.docId === docId);
+  if (!order) return;
+
+
+  if (status === "rejected" && order.status !== "rejected") {
+    try {
+      const products = DB.getProducts();
+      for (const item of order.items) {
+        const p = products.find(x => x.id === item.id);
+        if (p) {
+         
+          await DB.increaseStock(p.docId, item.qty); 
+        }
+      }
+      showToast("Order rejected. Stock returned to inventory.", "success");
+    } catch (error) {
+      console.error("Error returning stock:", error);
+      showToast("Failed to return stock", "error");
+    }
+  }
+
   await DB.updateOrderStatus(docId, status);
+  
+
+  await DB.fetchProducts();
   renderOrders();
+  renderProducts(); 
   updateNotifBadge();
-  showToast("Order " + status);
 };
 
 function updateNotifBadge() {
